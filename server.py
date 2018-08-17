@@ -70,7 +70,7 @@ def upload_file():
             return redirect(request.url)
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            user_id = filename.split(".")[0].lower()
+            user_id = os.path.splitext(filename)[0].lower()
             if check_user_validity(user_id):
                 user_dir = user_id
                 if not os.path.exists(os.path.join('static', 'submissions', user_dir)):
