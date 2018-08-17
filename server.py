@@ -1,6 +1,6 @@
 import os
 import sys
-from flask import Flask, request, redirect, url_for, flash, render_template, redirect
+from flask import Flask, request, redirect, url_for, flash, render_template
 from werkzeug.utils import secure_filename
 from werkzeug import SharedDataMiddleware
 from flask import send_from_directory
@@ -16,36 +16,43 @@ ALLOWED_EXTENSIONS = set(['txt', 'csv'])
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = './submitted_files'
 
+
 def get_users(fname):
     with open(fname, 'r') as fp:
         users = fp.readlines()
     return [item.rstrip("\n") for item in users]
 
-def compute_score(targets, prediction_file):    
+
+def compute_score(targets, prediction_file):
     try:
         predictions = np.genfromtxt(prediction_file)
-        assert predictions.size==targets.size,('Number of labels are more than required' if predictions.size>targets.size else 'Number of labels are less than required')
-        return 'OK', np.sum(predictions==targets)/targets.size
+        assert predictions.size == targets.size, ('Number of labels are more than required' if predictions.size > targets.size else 'Number of labels are less than required')
+        return 'OK', np.sum(predictions == targets) / targets.size
     except Exception as e:
         return e, 0.0
 
+
 def check_user_validity(user):
     return user in g_users
+
 
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+
 app.add_url_rule('/uploads/<filename>', 'uploaded_file',
                  build_only=True)
 app.wsgi_app = SharedDataMiddleware(app.wsgi_app, {
-    '/uploads':  app.config['UPLOAD_FOLDER']
+    '/uploads': app.config['UPLOAD_FOLDER']
 })
+
 
 @app.route('/uploads/<filename>')
 def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'],
                                filename)
+
 
 @app.route('/', methods=['GET', 'POST'])
 def upload_file():
@@ -69,13 +76,13 @@ def upload_file():
                 if not os.path.exists(os.path.join('static', 'submissions', user_dir)):
                     os.mkdir(os.path.join('static', 'submissions', user_dir), 755)
                 timestamp = str(time.time())
-                file.save(os.path.join('static', 'submissions', user_dir , user_id+"_"+timestamp))
-                status, user_score = compute_score(targets, os.path.join('static', 'submissions', user_dir, user_id+"_"+timestamp))
-                print(user_id+"_"+timestamp,user_score)
+                file.save(os.path.join('static', 'submissions', user_dir, user_id + "_" + timestamp))
+                status, user_score = compute_score(targets, os.path.join('static', 'submissions', user_dir, user_id + "_" + timestamp))
+                print(user_id + "_" + timestamp, user_score)
                 if status == 'OK':
                     print("Got file from user", user_id, user_score)
                     user_details = db.update_score(user_id, user_score)
-                    terminal_output+="<b>Rank:</b> %02d <br><b>Best score:</b> %0.5f <br><b>Current score:</b> %0.5f"%(user_details[1]+1,user_details[0],user_score)
+                    terminal_output += "<b>Rank:</b> %02d <br><b>Best score:</b> %0.5f <br><b>Current score:</b> %0.5f" % (user_details[1] + 1, user_details[0], user_score)
                 else:
                     terminal_output += "<b>Error: {}</b>".format(status)
             else:
@@ -97,14 +104,16 @@ def upload_file():
     %s
     <p>
     </div>
-    '''%(terminal_output)
+    ''' % (terminal_output)
+
+
 if __name__ == '__main__':
     db = dataBase()
     targets = None
-    #print(os.getcwd())
+    # print(os.getcwd())
     app.secret_key = 'super secret key'
     g_users = set(get_users(os.path.join('./data', 'usernames')))
     targets = np.genfromtxt(os.path.join('./data', 'target_imdb'))
     #app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     app.config['SESSION_TYPE'] = 'filesystem'
-    app.run(host= '0.0.0.0')
+    app.run(host='0.0.0.0')
