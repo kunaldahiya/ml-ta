@@ -4,6 +4,7 @@ import threading
 from operator import itemgetter
 import pdb
 
+
 class rankRecord(object):
     def __init__(self, entry_number, score, rank):
         self.entry_number = entry_number
@@ -11,7 +12,8 @@ class rankRecord(object):
         self.rank = rank
 
     def __repr__(self):
-        return "Entry number: {}, Score: {}, Rank: {}\n".format(self.entry_number, self.score, self.rank) 
+        return "Entry number: {}, Score: {}, Rank: {}\n".format(self.entry_number, self.score, self.rank)
+
 
 class dbRecord(object):
     def __init__(self, record, pos):
@@ -19,8 +21,7 @@ class dbRecord(object):
         self.position = pos
 
     def __repr__(self):
-        return "Entry number: {}, Score: {}, Position: {}".format(self.record.entry_number, self.record.best_score, self.position) 
-
+        return "Entry number: {}, Score: {}, Position: {}".format(self.record.entry_number, self.record.best_score, self.position)
 
 
 class dataBase(object):
@@ -30,21 +31,21 @@ class dataBase(object):
         self.lock = threading.Lock()
 
     def add_user(self, entry_number):
-        #FIXME Make this blocking as well; must not change when semaphore is blocked
+        # FIXME Make this blocking as well; must not change when semaphore is blocked
         rec = Record(entry_number)
         user_rank = -1
         if not self.ranks:
             user_rank = 0
         self.lock.acquire()
         self.ranks.append(rankRecord(entry_number, 0.0, user_rank))
-        self.records[entry_number] = dbRecord(rec, len(self.ranks)-1)        
+        self.records[entry_number] = dbRecord(rec, len(self.ranks) - 1)
         self.lock.release()
 
     def _search(self, entry_number, current_pos):
         # Search new position of the user
         new_pos = current_pos
         user_score = self.records[entry_number].record.best_score
-        for idx in range(current_pos-1, -1, -1):
+        for idx in range(current_pos - 1, -1, -1):
             if user_score <= self.ranks[idx].score:
                 new_pos = idx + 1
                 break
@@ -53,7 +54,7 @@ class dataBase(object):
         return new_pos
 
     def _need_to_adjust(self, pos):
-        if self.ranks[pos-1].score == self.ranks[pos].score:
+        if self.ranks[pos - 1].score == self.ranks[pos].score:
             return False
         else:
             return True
@@ -62,12 +63,12 @@ class dataBase(object):
         # Adjust rank of the users after the current user
         temp = self.ranks.pop(old_pos)
         self.ranks = self.ranks[:new_pos] + [temp] + self.ranks[new_pos:]
-        user_rank = self.ranks[new_pos-1].rank
+        user_rank = self.ranks[new_pos - 1].rank
         if self._need_to_adjust(new_pos) or new_pos == 0:
-            user_rank = self.ranks[new_pos-1].rank+1
+            user_rank = self.ranks[new_pos - 1].rank + 1
             if new_pos == 0:
                 user_rank = 0
-            for item in self.ranks[new_pos+1:]:
+            for item in self.ranks[new_pos + 1:]:
                 item.rank += 1
                 self.records[item.entry_number].position += 1
         self.ranks[new_pos].rank = user_rank
@@ -95,6 +96,6 @@ class dataBase(object):
             user_rank = self._adjust_rank(entry_number, user_pos, new_pos)
         self.lock.release()
         return user_rank
-    
+
     def __repr__(self):
         return "".join([str(item) for item in self.records])
