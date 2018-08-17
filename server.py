@@ -86,7 +86,7 @@ def upload_file():
                 else:
                     terminal_output += "<b>Error: {}</b>".format(status)
             else:
-                terminal_output += "<b>Invalid user!</b>"
+                terminal_output += "<b>Invalid file name. File name should be of the format kerberosId.txt OR kerberosId.csv</b>"
         else:
             terminal_output += "<b>Check file extension. Allowed extension are txt/csv</b>"
 
