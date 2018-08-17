@@ -2,7 +2,7 @@ from record import Record
 import numpy as np
 import threading
 from operator import itemgetter
-import pdb
+import pickle
 
 
 class rankRecord(object):
@@ -31,7 +31,6 @@ class dataBase(object):
         self.lock = threading.Lock()
 
     def add_user(self, entry_number):
-        # FIXME Make this blocking as well; must not change when semaphore is blocked
         rec = Record(entry_number)
         user_rank = -1
         if not self.ranks:
@@ -96,6 +95,17 @@ class dataBase(object):
             user_rank = self._adjust_rank(entry_number, user_pos, new_pos)
         self.lock.release()
         return user_rank
+
+    def save(self, fname):
+        data = {'ranks': self.ranks, 'records': self.records}
+        with open(fname, 'wb') as fp:
+            pickle.dump(data, fp, pickle.HIGHEST_PROTOCOL)
+    
+    def load(self, fname):
+        with open(fname, 'rb') as fp:
+            data = pickle.load(fp)
+        self.ranks = data['ranks']
+        self.records = data['records']
 
     def __repr__(self):
         return "".join([str(item) for item in self.records])
