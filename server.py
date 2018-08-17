@@ -8,7 +8,7 @@ sys.path.append('./src')
 from database import dataBase
 import numpy as np
 import time
-
+import logging
 
 UPLOAD_FOLDER = './static/submitted_files'
 ALLOWED_EXTENSIONS = set(['txt', 'csv'])
@@ -78,10 +78,9 @@ def upload_file():
                 timestamp = str(time.time())
                 file.save(os.path.join('static', 'submissions', user_dir, user_id + "_" + timestamp))
                 status, user_score = compute_score(targets, os.path.join('static', 'submissions', user_dir, user_id + "_" + timestamp))
-                print(user_id + "_" + timestamp, user_score)
                 if status == 'OK':
-                    print("Got file from user", user_id, user_score)
                     user_details = db.update_score(user_id, user_score)
+                    log.info(" User: {}, Best score: {}, Rank: {}, Current score: {}".format(user_id, user_details[0], user_details[1]+1, user_score))
                     terminal_output += "<b>Rank:</b> %02d <br><b>Best score:</b> %0.5f <br><b>Current score:</b> %0.5f" % (user_details[1] + 1, user_details[0], user_score)
                 else:
                     terminal_output += "<b>Error: {}</b>".format(status)
@@ -109,11 +108,11 @@ def upload_file():
 
 if __name__ == '__main__':
     db = dataBase()
-    targets = None
-    # print(os.getcwd())
     app.secret_key = 'super secret key'
     g_users = set(get_users(os.path.join('./data', 'usernames')))
     targets = np.genfromtxt(os.path.join('./data', 'target_imdb'))
+    logging.basicConfig(level=logging.INFO)
+    log = logging.getLogger("COL341-A2")
     #app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
     app.config['SESSION_TYPE'] = 'filesystem'
     app.run(host='0.0.0.0')
