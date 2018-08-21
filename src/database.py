@@ -1,7 +1,5 @@
 from record import Record
-import numpy as np
 import threading
-from operator import itemgetter
 import pickle
 
 
