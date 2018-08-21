@@ -86,6 +86,9 @@ class dataBase(object):
         if changed:
             self.ranks[user_pos].score = user_score
             user_rank = self.update_rank(entry_number, user_pos)
+            self.lock.acquire()
+            self.save(self.backup_file)
+            self.lock.release()
         return user_score, user_rank
 
     def update_rank(self, entry_number, user_pos):
@@ -102,7 +105,7 @@ class dataBase(object):
         data = {'ranks': self.ranks, 'records': self.records}
         with open(fname, 'wb') as fp:
             pickle.dump(data, fp, pickle.HIGHEST_PROTOCOL)
-    
+
     def load(self, fname):
         with open(fname, 'rb') as fp:
             data = pickle.load(fp)
