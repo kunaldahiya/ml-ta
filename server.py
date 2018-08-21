@@ -110,7 +110,7 @@ if __name__ == '__main__':
     db = dataBase()
     app.secret_key = 'super secret key'
     g_users = set(get_users(os.path.join('./data', 'usernames')))
-    targets = np.genfromtxt(os.path.join('./data', 'target_imdb'))
+    targets = np.genfromtxt(os.path.join('./data', 'target_labels'))
     logging.basicConfig(level=logging.INFO)
     log = logging.getLogger("COL341-A2")
     #app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
