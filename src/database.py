@@ -1,6 +1,7 @@
 from record import Record
 import threading
 import pickle
+import os
 
 
 class rankRecord(object):
@@ -23,10 +24,13 @@ class dbRecord(object):
 
 
 class dataBase(object):
-    def __init__(self):
+    def __init__(self, backup_file="backup.db"):
         self.ranks = []
         self.records = dict()
+        self.backup_file = backup_file
         self.lock = threading.Lock()
+        if os.path.exist(backup_file):
+            self.load(backup_file)
 
     def add_user(self, entry_number):
         rec = Record(entry_number)
