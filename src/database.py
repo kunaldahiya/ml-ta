@@ -29,7 +29,7 @@ class dataBase(object):
         self.records = dict()
         self.backup_file = backup_file
         self.lock = threading.Lock()
-        if os.path.exist(backup_file):
+        if os.path.exists(backup_file):
             self.load(backup_file)
 
     def add_user(self, entry_number):
