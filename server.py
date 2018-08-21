@@ -74,13 +74,13 @@ def upload_file():
             if check_user_validity(user_id):
                 user_dir = user_id
                 if not os.path.exists(os.path.join('static', 'submissions', user_dir)):
-                    os.mkdir(os.path.join('static', 'submissions', user_dir), 755)
+                    os.mkdir(os.path.join('static', 'submissions', user_dir))
                 timestamp = str(time.time())
                 file.save(os.path.join('static', 'submissions', user_dir, user_id + "_" + timestamp))
                 status, user_score = compute_score(targets, os.path.join('static', 'submissions', user_dir, user_id + "_" + timestamp))
                 if status == 'OK':
                     user_details = db.update_score(user_id, user_score)
-                    log.info(" User: {}, Best score: {}, Rank: {}, Current score: {}".format(user_id, user_details[0], user_details[1]+1, user_score))
+                    log.info(" User: {}, Best score: {}, Rank: {}, Current score: {}".format(user_id, user_details[0], user_details[1] + 1, user_score))
                     terminal_output += "<b>Rank:</b> %02d <br><b>Best score:</b> %0.5f <br><b>Current score:</b> %0.5f" % (user_details[1] + 1, user_details[0], user_score)
                 else:
                     terminal_output += "<b>Error: {}</b>".format(status)
