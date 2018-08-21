@@ -81,7 +81,7 @@ def upload_file():
                 if status == 'OK':
                     user_details = db.update_score(user_id, user_score)
                     log.info(" User: {}, Best score: {}, Rank: {}, Current score: {}".format(user_id, user_details[0], user_details[1] + 1, user_score))
-                    terminal_output += "<b>Rank:</b> %02d <br><b>Your Best score:</b> %0.5f <br><b>Your Current score:</b> %0.5f" % (user_details[1] + 1, user_details[0], user_score)
+                    terminal_output += "<b>Rank:</b> %02d <br><b>Your Best score:</b> %0.5f <br><b>Top score:</b> %0.5f <br><b>Your Current score:</b> %0.5f" % (user_details[1] + 1, user_details[0], user_details[2], user_score)
                 else:
                     terminal_output += "<b>Error: {}</b>".format(status)
             else:
@@ -91,9 +91,9 @@ def upload_file():
 
     return '''
     <!doctype html>
-    <title>COL 341 (A2)</title>
+    <title>COL 341 (A2): Neural Network</title>
     <div align="center">
-    <h1>Upload prediction file</h1>
+    <h1>Upload prediction file: Neural Network</h1>
     <form method=post enctype=multipart/form-data>
         <p><input type=file name=file>
         <input type=submit value=Upload>

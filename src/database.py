@@ -89,7 +89,8 @@ class dataBase(object):
             self.lock.acquire()
             self.save(self.backup_file)
             self.lock.release()
-        return user_score, user_rank
+        top_score = self.ranks[0].score
+        return user_score, user_rank, top_score
 
     def update_rank(self, entry_number, user_pos):
         user_rank = 0
