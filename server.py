@@ -81,11 +81,11 @@ def upload_file():
                 if status == 'OK':
                     user_details = db.update_score(user_id, user_score)
                     log.info(" User: {}, Best score: {}, Rank: {}, Current score: {}".format(user_id, user_details[0], user_details[1] + 1, user_score))
-                    terminal_output += "<b>Rank:</b> %02d <br><b>Best score:</b> %0.5f <br><b>Current score:</b> %0.5f" % (user_details[1] + 1, user_details[0], user_score)
+                    terminal_output += "<b>Rank:</b> %02d <br><b>Your Best score:</b> %0.5f <br><b>Your Current score:</b> %0.5f" % (user_details[1] + 1, user_details[0], user_score)
                 else:
                     terminal_output += "<b>Error: {}</b>".format(status)
             else:
-                terminal_output += "<b>Invalid file name. File name should be of the format kerberosId.txt OR kerberosId.csv</b>"
+                terminal_output += "<b>Invalid file name. File name should be of the format kerberosId.txt or kerberosId.csv</b>"
         else:
             terminal_output += "<b>Check file extension. Allowed extension are txt/csv</b>"
 
