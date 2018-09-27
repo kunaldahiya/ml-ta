@@ -1,8 +1,7 @@
 from record import Record
-import numpy as np
 import threading
-from operator import itemgetter
 import pickle
+import os
 
 
 class rankRecord(object):
@@ -25,10 +24,13 @@ class dbRecord(object):
 
 
 class dataBase(object):
-    def __init__(self):
+    def __init__(self, backup_file="backup.db"):
         self.ranks = []
         self.records = dict()
+        self.backup_file = backup_file
         self.lock = threading.Lock()
+        if os.path.exists(backup_file):
+            self.load(backup_file)
 
     def add_user(self, entry_number):
         rec = Record(entry_number)
@@ -73,6 +75,27 @@ class dataBase(object):
         self.ranks[new_pos].rank = user_rank
         return user_rank
 
+    def update_rankv2(self, entry_number):
+        self.ranks.sort(key=lambda x: x.score, reverse=True)
+
+        self.ranks[0].rank = 0  # rank of the first person is 0
+        self.records[self.ranks[0].entry_number].position = 0  # its position in rank is also 0
+
+        if self.ranks[0].entry_number == entry_number:
+            me = self.ranks[0]
+
+        for i in range(1, len(self.ranks)):
+            if(self.ranks[i].score == self.ranks[i - 1].score):
+                self.ranks[i].rank = self.ranks[i - 1].rank
+            else:
+                self.ranks[i].rank = self.ranks[i - 1].rank + 1
+
+            self.records[self.ranks[i].entry_number].position = i
+            if self.ranks[i].entry_number == entry_number:
+                me = self.ranks[i]
+
+        return me.rank
+
     def update_score(self, entry_number, score):
         # Check if user exist in database
         if entry_number not in self.records:
@@ -83,8 +106,13 @@ class dataBase(object):
         user_rank = self.ranks[user_pos].rank
         if changed:
             self.ranks[user_pos].score = user_score
-            user_rank = self.update_rank(entry_number, user_pos)
-        return user_score, user_rank
+            # user_rank = self.update_rank(entry_number, user_pos)
+            user_rank = self.update_rankv2(entry_number)
+            self.lock.acquire()
+            self.save(self.backup_file)
+            self.lock.release()
+        top_score = self.ranks[0].score
+        return user_score, user_rank, top_score
 
     def update_rank(self, entry_number, user_pos):
         user_rank = 0
@@ -100,7 +128,7 @@ class dataBase(object):
         data = {'ranks': self.ranks, 'records': self.records}
         with open(fname, 'wb') as fp:
             pickle.dump(data, fp, pickle.HIGHEST_PROTOCOL)
-    
+
     def load(self, fname):
         with open(fname, 'rb') as fp:
             data = pickle.load(fp)
