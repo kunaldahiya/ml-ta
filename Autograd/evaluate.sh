@@ -2,7 +2,7 @@
 run()
 {
     chmod +x $1
-    ./$1 $2 $3 $4
+    $1 $2 $3 $4 $5
 }
 
 compute_score()
@@ -17,6 +17,7 @@ compute_score()
     python3 $1 $2 $3 $4 $5
 }
 
+
 main()
 {
     : '
@@ -24,48 +25,72 @@ main()
         $2: sandbox_dir
         $3: entry_number
         $4: submissions_dir
+        $5: qid
     '
     main_dir=`pwd`
+    qid=$5
     if [ -f "${4}/${3}.zip" ]; then
         echo -e "Zip file found!"
-        unzip $4/$3.zip -d $2
-        zip_penalty="NO"
-    elif [ -f "${4}/${3}.rar" ]; then
-        echo -e "RAR file found!"
-        unrar x "$4/$3.rar" $2
-        zip_penalty="YES"
+        if [ -d "${2}/${3}" ]; then
+            echo -e "Unzipped dir found!"
+        else
+            echo -e "Unzipping!"
+            mkdir -p "${2}/${3}"
+            unzip "${4}/${3}.zip" -d "${2}/${3}"
+        fi
     fi
-    
-    stud_folder_path="${main_dir}/${2}/${3}"
-    data_folder_path="${main_dir}/${1}"
+
+    status="FAIL"
+    stud_dir_path="${main_dir}/${2}/${3}/${3}"
+    stud_bdir_path="${main_dir}/${2}/${3}"
+    stud_bfname="${stud_bdir_path}/run.sh"
+    stud_fname="${stud_dir_path}/run.sh"
+    data_dir_path="${main_dir}/${1}"
     compute_accuracy="${main_dir}/compute_accuracy.py"
-    cd "$stud_folder_path"
 
-    status="OK"
-    if [ -f "cnn" ]; then
-        fname="cnn" 
-        bash_fname_penalty="NO"
-        dos2unix cnn
-    elif [ -f "cnn.sh" ]; then
-        echo -e "Using cnn.sh; Follow submission instructions."
-        fname="cnn.sh"
-        bash_fname_penalty="YES"
-        dos2unix cnn.sh
+    if [ -d "${stud_dir_path}" ]; then
+        if [ -f ${stud_fname} ]; then
+            sed -i 's/\r$//' ${stud_fname} # Handle windows file endings
+            status="OK"
+        else
+            echo -e "run.sh not found!"
+        fi
     else
-        status="NA"
-        echo -e "ERROR; cnn or cnn.sh not found!"
-        bash_fname_penalty="YES"
+        echo -e "Bad directory structure!"
+        if [ -f ${stud_bfname} ]; then
+            status="OK"
+            sed -i 's/\r$//' ${stud_bfname} # Handle windows file endings
+            stud_fname="${stud_bfname}"
+            stud_dir_path="${stud_bdir_path}"
+        else
+            echo -e "run.sh not found!"
+        fi
     fi
-
-    echo -e "Zip Penalty: ${zip_penalty}\nBash_File_Name_Penalty: ${bash_fname_penalty}"
-    echo -e "${zip_penalty},${bash_fname_penalty}" > penalty
-
 
     if [ $status == "OK" ]; then
-        time run "${fname}" "${data_folder_path}/devnagri_train.csv" "${data_folder_path}/devnagri_test.csv" "${stud_folder_path}/predictions_cnn"
-        compute_score "${compute_accuracy}" "${data_folder_path}/devnagri_target_labels.txt" "${stud_folder_path}/predictions_cnn" "${stud_folder_path}/result_cnn" 
-    fi
-    cd $main_dir
+        echo -e "Running.."
+        cd "$stud_dir_path"
+        time run "${stud_fname}" ${qid} "${data_dir_path}/${TRAIN}" "${data_dir_path}/${TEST}" "${stud_dir_path}/predictions_q${qid}"
+        compute_score "${compute_accuracy}" "${data_dir_path}/${TEST_GT}" "${stud_dir_path}/predictions_q${qid}" "${stud_dir_path}/result_q${qid}" 
+        if [ -f "${stud_dir_path}/result_q${qid}" ]; then
+            cp "${stud_dir_path}/result_q${qid}" "${stud_bdir_path}/result_q${qid}"
+        fi
+        cd $main_dir
+    fi    
 }
 
-main data sandbox $1 submissions
+
+# change these filenames as per your requirement
+# label file should be a text file with an ground truth class in each line
+# Use dummy labels in dtest; if possible
+if [ "$5" -eq 1 ] || [ "$5" -eq 3 ]; then
+    TRAIN="yelp.dtrain.json"
+    TEST="yelp.dtest.json"
+    TEST_GT="yelp.dtest.labels.txt"
+else
+    TRAIN="fmnist.dtrain.csv"
+    TEST="fmnist.dtest.csv"
+    TEST_GT="fmnist.dtest.labels.txt"
+fi
+
+main $1 $2 $3 $4 $5
